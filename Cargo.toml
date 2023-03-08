@@ -1,0 +1,10 @@
+[workspace]
+members = ["crates/*"]
+
+[package]
+name = "lanime"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lanime_renderer = { path = "crates/lanime_renderer" }

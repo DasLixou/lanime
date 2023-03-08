@@ -1,0 +1,10 @@
+[package]
+name = "lanime_renderer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+env_logger = "0.10.0"
+log = "0.4.17"
+wgpu = "0.15.1"
+winit = "0.28.2"
