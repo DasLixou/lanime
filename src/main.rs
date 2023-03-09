@@ -1,3 +1,3 @@
 fn main() {
-    lanime_renderer::run();
+    pollster::block_on(lanime_renderer::run());
 }

@@ -8,3 +8,4 @@ edition = "2021"
 
 [dependencies]
 lanime_renderer = { path = "crates/lanime_renderer" }
+pollster = "0.3.0"
