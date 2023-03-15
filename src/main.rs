@@ -1,22 +1,17 @@
-use lanime_curves::{point::Point, quadratic::QuadraticCurve, Curve};
+use lanime_curves::{point::Point, Curve};
 
 fn main() {
-    let linear = QuadraticCurve {
-        start: Point { x: 0., y: 2. },
-        control: Point::ZERO,
-        end: Point { x: 2., y: 0. },
-    };
-
     #[rustfmt::skip]
-    let linear = &[
-        Point { x: 0.0, y: 2.0 },
-        Point { x: 0.0, y: 0.0 },
-        Point { x: 2.0, y: 0.0 },
+    let curve = &[
+        Point { x: -1.0, y: 0.0 },
+        Point { x: -1.2, y: 1.1 },
+        Point { x: 0.7, y: 1.0 },
+        Point { x: 1.0, y: 0.0 },
     ];
 
     let mut t = 0.;
     while t <= 1.0 {
-        println!("{:?}", Curve::interpolate(&linear, t));
+        println!("{:?}", Curve::interpolate(&curve, t));
         t += 0.1;
     }
     //pollster::block_on(lanime_renderer::run());

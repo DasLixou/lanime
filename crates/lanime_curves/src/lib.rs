@@ -1,3 +1,4 @@
+use lanime_curves_macros::recursive_tool;
 use point::Point;
 
 pub mod cubic;
@@ -10,51 +11,22 @@ pub trait Curve {
     fn interpolate(&self, t: f32) -> Point;
 }
 
-macro_rules! curve_math {
-    ($t:expr, {$($start:tt)+}, {$($end:tt)+}) => {
-        (1. - $t) * ($($start)+) + $t * ($($end)+)
+macro_rules! impl_curve {
+    ($size:literal) => {
+        impl Curve for &[Point; $size] {
+            #[allow(unused)] // for `$size == 1`, `t` will be unused
+            fn interpolate(&self, t: f32) -> Point {
+                recursive_tool!(0, $size)
+            }
+        }
     };
 }
 
-#[rustfmt::skip]
-macro_rules! recursive_tool {
-    ($me:expr, $t:expr, $start_idx:expr, 1) => {
-        $me[$start_idx]
-    };
-    ($me:expr, $t:expr, $start_idx:expr, 2) => {
-        curve_math!($t, 
-            { recursive_tool!($me, $t, $start_idx, 1) },
-            { recursive_tool!($me, $t, $start_idx + 1, 1)}
-        )
-    };
-    ($me:expr, $t:expr, $start_idx:expr, 3) => {
-        curve_math!($t, 
-            { recursive_tool!($me, $t, $start_idx, 2) },
-            { recursive_tool!($me, $t, $start_idx + 1, 2)}
-        )
-    };
-    /*($me:expr, $t:expr, $start_idx:expr, $len:expr) => {
-        curve_math!(t, 
-            { recursive_tool!($me, $t, $start_idx, $len - 1) },
-            { recursive_tool!($me, $t, $start_idx + 1, $len - 1)}
-        )
-    };*/
-}
-
-impl Curve for &[Point; 1] {
-    fn interpolate(&self, _t: f32) -> Point {
-        self[0]
-    }
-}
-
-impl Curve for &[Point; 2] {
-    fn interpolate(&self, t: f32) -> Point {
-        curve_math!(t, { self[0] }, { self[1] })
-    }
-}
-
-impl Curve for &[Point; 3] {
-    fn interpolate(&self, t: f32) -> Point {
-        recursive_tool!(self, t, 0, 3)
-    }
-}
+impl_curve!(1);
+impl_curve!(2);
+impl_curve!(3);
+impl_curve!(4);
+impl_curve!(5);
+impl_curve!(6);
+impl_curve!(7);
+impl_curve!(8);
