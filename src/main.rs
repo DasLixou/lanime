@@ -14,5 +14,5 @@ fn main() {
         println!("{:?}", Curve::interpolate(&curve, t));
         t += 0.1;
     }
-    //pollster::block_on(lanime_renderer::run());
+    pollster::block_on(lanime_renderer::run());
 }
