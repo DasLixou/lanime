@@ -7,6 +7,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-lanime_renderer = { path = "crates/lanime_renderer" }
+#lanime_renderer = { path = "crates/lanime_renderer" }
 lanime_curves = { path = "crates/lanime_curves" }
 pollster = "0.3.0"
