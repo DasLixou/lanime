@@ -1,7 +1,0 @@
-[package]
-name = "lanime_curves"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-lanime_curves_macros = { path = "./macros" }

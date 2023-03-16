@@ -1,18 +1,7 @@
-use lanime_curves::{point::Point, Curve};
+use lanime_animation::AnimationCurve;
 
 fn main() {
-    #[rustfmt::skip]
-    let curve = &[
-        Point { x: -1.0, y: 0.0 },
-        Point { x: -1.2, y: 1.1 },
-        Point { x: 0.7, y: 1.0 },
-        Point { x: 1.0, y: 0.0 },
-    ];
-
-    let mut t = 0.;
-    while t <= 1.0 {
-        println!("{:?}", Curve::interpolate(&curve, t));
-        t += 0.1;
-    }
+    let curve = AnimationCurve::ease_in_out();
+    println!("x: 0.4, y: {}", curve.curve_y(0.4));
     pollster::block_on(lanime_renderer::run());
 }
