@@ -1,6 +1,8 @@
 use std::ptr;
 
-pub trait Lens<'a>: Sized {
+use as_any::AsAny;
+
+pub trait Lens<'a>: Sized + AsAny {
     type Input;
     type Output;
 
@@ -28,7 +30,7 @@ pub trait Lens<'a>: Sized {
 #[derive(Clone, Copy)]
 pub struct BindableField<Target, Type>(pub fn(&mut Target) -> &mut Type);
 
-impl<'a, Target, Type> Lens<'a> for BindableField<Target, Type> {
+impl<'a, Target: 'static, Type: 'static> Lens<'a> for BindableField<Target, Type> {
     type Input = Target;
     type Output = Type;
 
