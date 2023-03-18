@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 
-use crate::{as_any::AsAny, IntoNodeIdx, NodeIdx};
+pub use lanime_graph::NodeIdx;
+
+use crate::{as_any::AsAny, IntoNodeIdx};
 
 pub trait Node: AsAny {}
 
