@@ -1,6 +1,6 @@
 use lanime::prelude::{
     nodes::{Rectangle, Resource},
-    AnimationCurve, Res, Scene, SceneDescriptor,
+    AnimationCurve, IntoRes, Res, Scene, SceneDescriptor,
 };
 
 fn main() {
@@ -13,10 +13,12 @@ fn main() {
 
     let height = scene.node(Resource(720.));
 
-    let _rectangle = scene.node(Rectangle {
+    let x = Rectangle {
         width: Res::Owned(1280.),
-        height: Res::Node(height),
-    });
+        height: height.res(),
+    };
+
+    let _rectangle = scene.node(x);
 
     pollster::block_on(lanime_renderer::run());
 }
