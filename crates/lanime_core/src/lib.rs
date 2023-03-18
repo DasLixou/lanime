@@ -1,5 +1,6 @@
 pub mod bindable_field;
 
+pub mod as_any;
 mod scene;
 pub use scene::*;
 

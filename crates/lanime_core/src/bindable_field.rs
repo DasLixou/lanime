@@ -1,6 +1,6 @@
 use std::ptr;
 
-use as_any::AsAny;
+use crate::as_any::AsAny;
 
 pub trait Lens<'a>: Sized + AsAny {
     type Input;
@@ -44,8 +44,8 @@ pub struct LensCombination<A, B>(A, B);
 
 impl<'a, A, B> Lens<'a> for LensCombination<A, B>
 where
-    A: Lens<'a> + 'a,
-    B: Lens<'a, Input = A::Output>,
+    A: Lens<'a> + 'static,
+    B: Lens<'a, Input = A::Output> + 'static,
 {
     type Input = A::Input;
     type Output = B::Output;

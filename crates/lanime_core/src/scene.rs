@@ -1,12 +1,8 @@
-use std::{
-    any::{Any, TypeId},
-    fmt::Debug,
-};
+use std::{any::Any, fmt::Debug};
 
-use as_any::Downcast;
 use slotmap::{new_key_type, HopSlotMap, SecondaryMap};
 
-use crate::{bindable_field::Lens, BoxedNode, Node, NodeRef, NodeResult, Resource};
+use crate::{bindable_field::Lens, BoxedNode, Node, NodeRef, NodeResult};
 
 new_key_type! {
     pub struct NodeIdx;
@@ -49,7 +45,13 @@ impl Scene {
         }
     }
 
-    pub fn bind<'a, Type, Source: Node + NodeResult<Type>, Target: Node, L: 'static>(
+    pub fn bind<
+        'a,
+        Type,
+        Source: Node + NodeResult<Type> + 'static,
+        Target: Node + 'static,
+        L: 'static,
+    >(
         &mut self,
         source: &NodeRef<Source>,
         desc: L,
@@ -61,10 +63,9 @@ impl Scene {
             source.idx(),
             Box::new(desc),
             |s, t, lens| {
-                println!("UGHGH {:?}", TypeId::of::<Source>());
-                let source = s.downcast_mut::<Source>().unwrap();
+                let source = s.as_any_mut().downcast_mut::<Source>().unwrap();
                 let val = source.get();
-                let target = t.downcast_mut::<Target>().unwrap();
+                let target = t.as_any_mut().downcast_mut::<Target>().unwrap();
                 let l = lens.downcast_mut::<L>().unwrap();
                 let target = unsafe {
                     let ptr = target as *mut Target;
@@ -81,9 +82,6 @@ impl Scene {
             for bind in cry_helper(bindings) {
                 self.update(bind.0);
                 let source = cry_helper(&mut self.nodes[bind.0]);
-                println!("wo problem? {:?}", source.type_id());
-                println!("wo problem? {:?}", source.type_name()); // this say's its Resource<f32> but hasn't the TypeId of it (cmp above and below)
-                println!("wo problem2? {:?}", TypeId::of::<Resource<f32>>());
                 (bind.2)(source, me, &mut bind.1);
             }
         }
@@ -91,7 +89,7 @@ impl Scene {
 
     pub fn debug<S: Debug + 'static>(&self, node: NodeIdx) {
         let me = &self.nodes[node];
-        let source = me.downcast_ref::<S>().unwrap();
+        let source = me.as_any().downcast_ref::<S>().unwrap();
         println!("{:?}", source);
     }
 }

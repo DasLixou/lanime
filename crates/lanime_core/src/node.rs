@@ -1,8 +1,6 @@
 use std::marker::PhantomData;
 
-use as_any::AsAny;
-
-use crate::{IntoNodeIdx, NodeIdx};
+use crate::{as_any::AsAny, IntoNodeIdx, NodeIdx};
 
 pub trait Node: AsAny {}
 
