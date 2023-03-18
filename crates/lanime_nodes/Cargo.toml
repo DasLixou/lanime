@@ -1,0 +1,7 @@
+[package]
+name = "lanime_nodes"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lanime_core = { path = "../lanime_core" }

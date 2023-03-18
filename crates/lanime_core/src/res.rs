@@ -1,7 +1,12 @@
-use crate::NodeIdx;
+use crate::{Node, NodeIdx, NodeOutput};
+
+pub struct Resource<T>(pub T);
+
+impl<T> Node for Resource<T> {}
+impl<T> NodeOutput<T> for Resource<T> {}
 
 pub enum Res<T> {
-    Owned(T),
+    Value(T),
     Node(NodeIdx),
 }
 
