@@ -1,12 +1,12 @@
 use std::marker::PhantomData;
 
-use crate::{IntoRes, NodeIdx, Res};
+use crate::NodeIdx;
 
 pub trait Node {}
 
 pub type BoxedNode = Box<dyn Node>;
 
-pub trait NodeOutput<T>: Node {}
+pub trait NodeResult<T>: Node {}
 
 #[derive(Clone, Copy)]
 pub struct NodeRef<N: Node> {
@@ -14,12 +14,11 @@ pub struct NodeRef<N: Node> {
     pub(crate) phantom: PhantomData<N>,
 }
 
-impl<N: Node, T> IntoRes<T> for NodeRef<N>
-where
-    N: NodeOutput<T>,
-{
-    #[inline]
-    fn res(self) -> Res<T> {
-        Res::Node(self.idx)
-    }
+mod sealed {
+    pub trait Sealed {}
 }
+
+pub trait NodeOutput<T>: sealed::Sealed {}
+
+impl<N: Node> sealed::Sealed for NodeRef<N> {}
+impl<N: Node, T> NodeOutput<T> for NodeRef<N> where N: NodeResult<T> {}

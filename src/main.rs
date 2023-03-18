@@ -1,4 +1,5 @@
-use lanime::prelude::{nodes::Text, AnimationCurve, Res::*, Scene, SceneDescriptor, Transform};
+use lanime::prelude::{nodes::Text, AnimationCurve, Scene, SceneDescriptor, Transform};
+use lanime_core::{bindable_field::Lens, Resource};
 use lanime_nodes::Render;
 
 fn main() {
@@ -11,19 +12,20 @@ fn main() {
 }
 
 fn example() -> Scene {
-    let mut scene = Scene::builder();
+    let mut scene = Scene::new(&SceneDescriptor {
+        label: Some("Example"),
+    });
 
     let text = scene.node(Text {
-        text: Value("Hello, world!"),
-        transform: Value(Transform {
-            x: Value(12.),
-            ..Transform::DEFAULT
-        }),
+        text: "Hello, world!",
+        transform: Transform::DEFAULT,
     });
+
+    let text_y = scene.node(Resource(0.));
+
+    scene.bind(text_y, Text::transform.then(Transform::y), &text);
 
     scene.node(Render::new(&[&text])); // this can later be used to do post processing effects
 
-    scene.build(&SceneDescriptor {
-        label: Some("Example"),
-    })
+    scene
 }
