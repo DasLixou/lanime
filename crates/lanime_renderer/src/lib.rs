@@ -422,6 +422,9 @@ impl Renderer {
             self.surface.configure(&self.device, &self.config);
             self.depth_texture =
                 Texture::create_depth_texture(&self.device, &self.config, "depth_buffer");
+            self.camera.aspect = self.config.width as f32 / self.config.height as f32;
+            self.camera_controller.update_camera(&mut self.camera);
+            self.camera_uniform.update_view_proj(&self.camera);
         }
     }
 
