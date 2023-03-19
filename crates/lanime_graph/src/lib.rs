@@ -1,5 +1,8 @@
-use std::{collections::HashMap, ops::Index};
+pub mod post_order_dfs;
 
+use std::ops::{Index, IndexMut};
+
+use hashbrown::HashMap;
 use slotmap::{new_key_type, HopSlotMap, SecondaryMap};
 
 new_key_type! {
@@ -25,6 +28,10 @@ impl<N, E> Graph<N, E> {
         }
     }
 
+    #[inline]
+    #[rustfmt::skip]
+    pub fn node_len(&self) -> usize { self.nodes.len() }
+
     pub fn add_node(&mut self, value: N) -> NodeIdx {
         let idx = self.nodes.insert(value);
         self.incoming_adjacencies.insert(idx, HashMap::new());
@@ -38,6 +45,27 @@ impl<N, E> Graph<N, E> {
         self.incoming_adjacencies[dst].insert(src, idx);
         idx
     }
+
+    pub fn incoming_neighbors(
+        &self,
+        dst: NodeIdx,
+    ) -> impl Iterator<Item = (NodeIdx, EdgeIdx)> + '_ {
+        self.incoming_adjacencies[dst]
+            .iter()
+            .map(|(node, edge)| (*node, *edge))
+    }
+
+    #[inline]
+    pub fn get_disjoint_mut<const NI: usize, const EI: usize>(
+        &mut self,
+        nodes: [NodeIdx; NI],
+        edges: [EdgeIdx; EI],
+    ) -> (Option<[&mut N; NI]>, Option<[&mut E; EI]>) {
+        (
+            self.nodes.get_disjoint_mut(nodes),
+            self.edges.get_disjoint_mut(edges),
+        )
+    }
 }
 
 impl<N, E> Index<NodeIdx> for Graph<N, E> {
@@ -48,10 +76,22 @@ impl<N, E> Index<NodeIdx> for Graph<N, E> {
     }
 }
 
+impl<N, E> IndexMut<NodeIdx> for Graph<N, E> {
+    fn index_mut(&mut self, index: NodeIdx) -> &mut Self::Output {
+        self.nodes.get_mut(index).unwrap()
+    }
+}
+
 impl<N, E> Index<EdgeIdx> for Graph<N, E> {
     type Output = E;
 
     fn index(&self, index: EdgeIdx) -> &Self::Output {
         self.edges.get(index).unwrap()
+    }
+}
+
+impl<N, E> IndexMut<EdgeIdx> for Graph<N, E> {
+    fn index_mut(&mut self, index: EdgeIdx) -> &mut Self::Output {
+        self.edges.get_mut(index).unwrap()
     }
 }

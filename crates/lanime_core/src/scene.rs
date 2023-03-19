@@ -1,6 +1,6 @@
 use std::{any::Any, fmt::Debug};
 
-use lanime_graph::{Graph, NodeIdx};
+use lanime_graph::{post_order_dfs::PostOrderDFS, Graph, NodeIdx};
 
 use crate::{bindable_field::Lens, BoxedNode, Node, NodeRef, NodeResult};
 
@@ -69,18 +69,15 @@ impl Scene {
         );
     }
 
-    pub fn update(&mut self, _node: NodeIdx) {
-        /* TODO: Post Order DFS
+    pub fn update(&mut self, node: NodeIdx) {
+        let mut dfs = PostOrderDFS::new(&self.nodes, node);
 
-        let me = cry_helper(&mut self.nodes[node]);
-        if let Some(bindings) = self.bindings.get_mut(node) {
-            for bind in cry_helper(bindings) {
-                self.update(bind.0);
-                let source = cry_helper(&mut self.nodes[bind.0]);
-                (bind.2)(source, me, &mut bind.1);
-            }
+        while let Some((src, ex, dst)) = dfs.next(&self.nodes) {
+            let (n, e) = self.nodes.get_disjoint_mut([src, dst], [ex]);
+            let [source, dest] = n.unwrap();
+            let [edge] = e.unwrap();
+            (edge.1)(source, dest, &mut edge.0);
         }
-         */
     }
 
     pub fn debug<S: Debug + 'static>(&self, node: NodeIdx) {
