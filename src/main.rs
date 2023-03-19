@@ -1,6 +1,8 @@
-use lanime::prelude::{nodes::Text, AnimationCurve, Scene, SceneDescriptor, Transform};
-use lanime_core::{bindable_field::Lens, IntoNodeIdx, NodeRef, Resource};
-use lanime_nodes::Render;
+use lanime::prelude::{
+    bindable_field::Lens,
+    nodes::{Render, Text},
+    AnimationCurve, IntoNodeIdx, NodeRef, Resource, Scene, SceneDescriptor, Transform,
+};
 
 fn main() {
     let curve = AnimationCurve::ease_in_out();
