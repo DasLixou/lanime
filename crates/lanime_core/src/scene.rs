@@ -1,4 +1,4 @@
-use std::{any::Any, fmt::Debug};
+use std::{any::Any, fmt::Debug, ptr};
 
 use lanime_graph::{post_order_dfs::PostOrderDFS, Graph, NodeIdx};
 
@@ -39,8 +39,7 @@ impl Scene {
     }
 
     pub fn bind<
-        'a,
-        Type,
+        Type: 'static,
         Source: Node + NodeResult<Type> + 'static,
         Target: Node + 'static,
         L: 'static,
@@ -50,7 +49,7 @@ impl Scene {
         desc: L,
         target: &NodeRef<Target>,
     ) where
-        L: Lens<'a, Input = Target, Output = Type>,
+        for<'a> L: Lens<'a, Input = Target, Output = Type>,
     {
         self.nodes.add_edge(
             source.idx,
@@ -60,11 +59,9 @@ impl Scene {
                 let val = source.get();
                 let target = t.as_any_mut().downcast_mut::<Target>().unwrap();
                 let l = lens.downcast_mut::<L>().unwrap();
-                let target = unsafe {
-                    let ptr = target as *mut Target;
-                    &mut *ptr
-                };
-                l.update(target, val);
+                unsafe {
+                    ptr::write(l.get_mut(target), val);
+                }
             }),
         );
     }

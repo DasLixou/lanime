@@ -1,5 +1,3 @@
-use std::ptr;
-
 use crate::as_any::AsAny;
 
 pub trait Lens<'a>: Sized + AsAny {
@@ -7,16 +5,6 @@ pub trait Lens<'a>: Sized + AsAny {
     type Output;
 
     fn get_mut(&self, input: &'a mut Self::Input) -> &'a mut Self::Output;
-
-    #[inline]
-    fn update(&self, input: &'a mut Self::Input, value: Self::Output)
-    where
-        Self: 'a,
-    {
-        unsafe {
-            ptr::write(self.get_mut(input), value);
-        }
-    }
 
     #[inline]
     fn then<L>(self, other: L) -> LensCombination<Self, L>
