@@ -1,6 +1,7 @@
-use lanime_core::{bindable_field::BindableField, Node, Transform};
+use lanime_bindfields::BindFields;
+use lanime_core::{Node, Transform};
 
-#[derive(Debug)]
+#[derive(Debug, BindFields)]
 pub struct Text<'s> {
     pub text: &'s str,
     pub transform: Transform,
@@ -11,12 +12,6 @@ impl Text<'_> {
         text: "",
         transform: Transform::DEFAULT,
     };
-}
-
-#[allow(non_upper_case_globals)]
-impl<'s> Text<'s> {
-    pub const text: BindableField<Self, &'s str> = BindableField(|me| &mut me.text);
-    pub const transform: BindableField<Self, Transform> = BindableField(|me| &mut me.transform);
 }
 
 impl Node for Text<'static> {}

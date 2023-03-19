@@ -1,8 +1,9 @@
 use std::{any::Any, fmt::Debug, ptr};
 
+use lanime_bindfields::Lens;
 use lanime_graph::{post_order_dfs::PostOrderDFS, Graph, NodeIdx};
 
-use crate::{bindable_field::Lens, BoxedNode, Node, NodeRef, NodeResult};
+use crate::{BoxedNode, Node, NodeRef, NodeResult};
 
 pub trait IntoNodeIdx {
     fn idx(&self) -> NodeIdx;

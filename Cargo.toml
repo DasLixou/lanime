@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 lanime_animation = { path = "crates/lanime_animation" }
+lanime_bindfields = { path = "crates/lanime_bindfields" }
 lanime_core = { path = "crates/lanime_core" }
 lanime_nodes = { path = "crates/lanime_nodes" }
 lanime_renderer = { path = "crates/lanime_renderer" }

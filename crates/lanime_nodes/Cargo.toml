@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 lanime_core = { path = "../lanime_core" }
+lanime_bindfields = { path = "../lanime_bindfields" }

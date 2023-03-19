@@ -1,6 +1,6 @@
-use crate::as_any::AsAny;
+pub use lanime_bindfields_macros::*;
 
-pub trait Lens<'a>: Sized + AsAny {
+pub trait Lens<'a>: Sized {
     type Input;
     type Output;
 

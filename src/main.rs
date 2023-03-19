@@ -1,7 +1,6 @@
 use lanime::prelude::{
-    bindable_field::Lens,
     nodes::{Render, Text},
-    AnimationCurve, IntoNodeIdx, NodeRef, Resource, Scene, SceneDescriptor, Transform,
+    AnimationCurve, IntoNodeIdx, Lens, NodeRef, Resource, Scene, SceneDescriptor, Transform,
 };
 
 fn main() {
