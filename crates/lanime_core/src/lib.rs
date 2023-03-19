@@ -5,8 +5,10 @@ pub use scene::*;
 mod node;
 pub use node::*;
 
-mod res;
-pub use res::*;
+pub mod res;
 
 mod transform;
 pub use transform::*;
+
+mod context;
+pub use context::*;

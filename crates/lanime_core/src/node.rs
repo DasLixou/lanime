@@ -2,14 +2,14 @@ use std::marker::PhantomData;
 
 pub use lanime_graph::NodeIdx;
 
-use crate::{as_any::AsAny, IntoNodeIdx};
+use crate::{as_any::AsAny, context::SceneContext, IntoNodeIdx};
 
 pub trait Node: AsAny {}
 
 pub type BoxedNode = Box<dyn Node>;
 
 pub trait NodeResult<T>: Node {
-    fn get(&mut self) -> T;
+    fn get(&mut self, cx: &SceneContext) -> T;
 }
 
 #[derive(Clone, Copy)]

@@ -3,7 +3,7 @@ use std::{any::Any, fmt::Debug, ptr};
 use lanime_bindfields::Lens;
 use lanime_graph::{post_order_dfs::PostOrderDFS, Graph, NodeIdx};
 
-use crate::{BoxedNode, Node, NodeRef, NodeResult};
+use crate::{BoxedNode, Node, NodeRef, NodeResult, SceneContext};
 
 pub trait IntoNodeIdx {
     fn idx(&self) -> NodeIdx;
@@ -13,14 +13,10 @@ pub struct SceneDescriptor<'a> {
     pub label: Option<&'a str>,
 }
 
+type UpdateSignature = fn(&mut BoxedNode, &mut BoxedNode, &mut Box<dyn Any>, &SceneContext);
+
 pub struct Scene {
-    nodes: Graph<
-        BoxedNode,
-        (
-            Box<dyn Any>,
-            fn(&mut BoxedNode, &mut BoxedNode, &mut Box<dyn Any>),
-        ),
-    >,
+    nodes: Graph<BoxedNode, (Box<dyn Any>, UpdateSignature)>,
 }
 
 impl Scene {
@@ -55,9 +51,9 @@ impl Scene {
         self.nodes.add_edge(
             source.idx,
             target.idx,
-            (Box::new(desc), |s, t, lens| {
+            (Box::new(desc), |s, t, lens, cx| {
                 let source = s.as_any_mut().downcast_mut::<Source>().unwrap();
-                let val = source.get();
+                let val = source.get(cx);
                 let target = t.as_any_mut().downcast_mut::<Target>().unwrap();
                 let l = lens.downcast_mut::<L>().unwrap();
                 unsafe {
@@ -67,14 +63,14 @@ impl Scene {
         );
     }
 
-    pub fn update(&mut self, node: NodeIdx) {
+    pub fn update(&mut self, node: NodeIdx, cx: SceneContext) {
         let mut dfs = PostOrderDFS::new(&self.nodes, node);
 
         while let Some((src, ex, dst)) = dfs.next(&self.nodes) {
             let (n, e) = self.nodes.get_disjoint_mut([src, dst], [ex]);
             let [source, dest] = n.unwrap();
             let [edge] = e.unwrap();
-            (edge.1)(source, dest, &mut edge.0);
+            (edge.1)(source, dest, &mut edge.0, &cx);
         }
     }
 
