@@ -1,8 +1,11 @@
+use std::marker::PhantomData;
+
 use cgmath::prelude::*;
 
 use camera::{Camera, CameraUniform};
 use camera_controller::CameraController;
-use lanime_core::{NodeIdx, Scene, SceneContext};
+use context::RenderContext;
+use lanime_core::{IntoNodeIdx, Node, NodeIdx, NodeRef, Scene, SceneContext};
 use texture::Texture;
 use wgpu::{util::DeviceExt, Operations};
 use winit::{
@@ -11,8 +14,15 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
+pub trait NodeRender: Node {
+    fn init(&mut self, cx: &RenderContext);
+
+    fn render(&mut self, cx: &RenderContext);
+}
+
 pub mod camera;
 pub mod camera_controller;
+pub mod context;
 pub mod texture;
 
 #[repr(C)]
@@ -128,9 +138,10 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
     NUM_INSTANCES_PER_ROW as f32 * 0.5,
 );
 
-pub struct Renderer<'s> {
+pub struct Renderer<'s, N: NodeRender> {
     scene: &'s mut Scene,
     frame: u64,
+    surface_format: wgpu::TextureFormat,
     surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -151,10 +162,12 @@ pub struct Renderer<'s> {
     instances: Vec<Instance>,
     instance_buffer: wgpu::Buffer,
     depth_texture: Texture,
+    render_node: NodeIdx,
+    phantom_data: PhantomData<N>,
 }
 
-impl<'s> Renderer<'s> {
-    pub async fn new(window: Window, scene: &'s mut Scene) -> Renderer<'s> {
+impl<'s, N: NodeRender + 'static> Renderer<'s, N> {
+    pub async fn new(window: Window, scene: &'s mut Scene, node: NodeRef<N>) -> Renderer<'s, N> {
         let size = window.inner_size();
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -389,10 +402,22 @@ impl<'s> Renderer<'s> {
             usage: wgpu::BufferUsages::VERTEX,
         });
 
+        scene
+            .get_node_mut::<N>(node.idx())
+            .unwrap()
+            .init(&RenderContext {
+                surface_format: &surface_format,
+                device: &device,
+                config: &config,
+                queue: &queue,
+                view: None,
+            });
+
         Self {
             scene,
             frame: 0,
             window,
+            surface_format,
             surface,
             device,
             queue,
@@ -412,6 +437,8 @@ impl<'s> Renderer<'s> {
             instances,
             instance_buffer,
             depth_texture,
+            render_node: node.idx(),
+            phantom_data: PhantomData,
         }
     }
 
@@ -461,7 +488,7 @@ impl<'s> Renderer<'s> {
             });
 
         {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
@@ -486,6 +513,7 @@ impl<'s> Renderer<'s> {
                 }),
             });
 
+            /*
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
@@ -493,10 +521,23 @@ impl<'s> Renderer<'s> {
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as _);
+            */
         }
 
-        // submit will accept anything that implements IntoIter
         self.queue.submit(std::iter::once(encoder.finish()));
+
+        self.scene
+            .get_node_mut::<N>(self.render_node)
+            .unwrap()
+            .render(&RenderContext {
+                surface_format: &self.surface_format,
+                device: &self.device,
+                config: &self.config,
+                queue: &self.queue,
+                view: Some(&view),
+            });
+
+        // submit will accept anything that implements IntoIter
         output.present();
 
         self.frame += 1;
@@ -505,12 +546,12 @@ impl<'s> Renderer<'s> {
     }
 }
 
-pub async fn run(scene: &'static mut Scene) {
+pub async fn run(scene: &'static mut Scene, node: NodeRef<impl NodeRender + 'static>) {
     env_logger::init();
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
-    let mut renderer = Renderer::new(window, scene).await;
+    let mut renderer = Renderer::new(window, scene, node).await;
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {

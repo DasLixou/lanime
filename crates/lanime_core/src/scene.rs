@@ -82,4 +82,9 @@ impl Scene {
         let source = me.as_any().downcast_ref::<S>().unwrap();
         println!("{:?}", source);
     }
+
+    #[inline]
+    pub fn get_node_mut<N: Node + 'static>(&mut self, node: NodeIdx) -> Option<&mut N> {
+        self.nodes[node].as_any_mut().downcast_mut()
+    }
 }
