@@ -2,6 +2,7 @@ use cgmath::prelude::*;
 
 use camera::{Camera, CameraUniform};
 use camera_controller::CameraController;
+use lanime_core::{NodeIdx, Scene, SceneContext};
 use texture::Texture;
 use wgpu::{util::DeviceExt, Operations};
 use winit::{
@@ -127,7 +128,9 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
     NUM_INSTANCES_PER_ROW as f32 * 0.5,
 );
 
-pub struct Renderer {
+pub struct Renderer<'s> {
+    scene: &'s mut Scene,
+    frame: u64,
     surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -150,8 +153,8 @@ pub struct Renderer {
     depth_texture: Texture,
 }
 
-impl Renderer {
-    pub async fn new(window: Window) -> Self {
+impl<'s> Renderer<'s> {
+    pub async fn new(window: Window, scene: &'s mut Scene) -> Renderer<'s> {
         let size = window.inner_size();
 
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -387,6 +390,8 @@ impl Renderer {
         });
 
         Self {
+            scene,
+            frame: 0,
             window,
             surface,
             device,
@@ -440,6 +445,7 @@ impl Renderer {
             0,
             bytemuck::cast_slice(&[self.camera_uniform]),
         );
+        self.scene.update(SceneContext { frame: self.frame });
     }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -493,16 +499,18 @@ impl Renderer {
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
+        self.frame += 1;
+
         Ok(())
     }
 }
 
-pub async fn run() {
+pub async fn run(scene: &'static mut Scene) {
     env_logger::init();
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
-    let mut renderer = Renderer::new(window).await;
+    let mut renderer = Renderer::new(window, scene).await;
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {

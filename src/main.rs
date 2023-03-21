@@ -1,23 +1,23 @@
 use lanime::prelude::{
     nodes::{Render, Text},
-    AnimationCurve, IntoNodeIdx, Lens, NodeRef, Scene, SceneDescriptor, Transform,
+    AnimationCurve, Lens, Scene, SceneDescriptor, Transform,
 };
-use lanime_core::{res::ClosureResource, SceneContext};
+use lanime_core::res::ClosureResource;
 
 fn main() {
     let curve = AnimationCurve::ease_in_out();
     println!("x: 0.4, y: {}", curve.curve_y(0.4));
 
-    let (text, mut scene) = example();
-    for frame in 0..60 {
-        scene.update(text.idx(), SceneContext { frame });
-        scene.debug::<Text>(text.idx());
-    }
+    let mut scene = example();
 
-    pollster::block_on(lanime_renderer::run());
+    let scene_ptr = &mut scene as *mut Scene;
+
+    unsafe {
+        pollster::block_on(lanime_renderer::run(&mut *scene_ptr));
+    }
 }
 
-fn example() -> (NodeRef<Text<'static>>, Scene) {
+fn example() -> Scene {
     let mut scene = Scene::new(&SceneDescriptor {
         label: Some("Example"),
     });
@@ -33,5 +33,5 @@ fn example() -> (NodeRef<Text<'static>>, Scene) {
 
     scene.node(Render::new(&[&text])); // this node can later be used to do post processing effects
 
-    (text, scene)
+    scene
 }

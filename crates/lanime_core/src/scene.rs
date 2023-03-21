@@ -1,7 +1,10 @@
 use std::{any::Any, fmt::Debug, ptr};
 
 use lanime_bindfields::Lens;
-use lanime_graph::{post_order_dfs::PostOrderDFS, Graph, NodeIdx};
+use lanime_graph::{
+    post_order_dfs::{PostOrderDFS, StartNode},
+    Graph, NodeIdx,
+};
 
 use crate::{BoxedNode, Node, NodeRef, NodeResult, SceneContext};
 
@@ -63,8 +66,8 @@ impl Scene {
         );
     }
 
-    pub fn update(&mut self, node: NodeIdx, cx: SceneContext) {
-        let mut dfs = PostOrderDFS::new(&self.nodes, node);
+    pub fn update(&mut self, cx: SceneContext) {
+        let mut dfs = PostOrderDFS::new(&self.nodes, StartNode::SearchAll);
 
         while let Some((src, ex, dst)) = dfs.next(&self.nodes) {
             let (n, e) = self.nodes.get_disjoint_mut([src, dst], [ex]);
