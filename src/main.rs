@@ -3,6 +3,7 @@ use lanime::prelude::{
     res::ClosureResource,
     AnimationCurve, Lens, NodeRef, Scene, SceneDescriptor, Transform,
 };
+use lanime_core::Position;
 
 fn main() {
     let curve = AnimationCurve::ease_in_out();
@@ -29,7 +30,11 @@ fn example() -> (Scene, NodeRef<Text<'static>>) {
 
     let text_y = scene.node(ClosureResource(|cx| (cx.frame as f32 / 60.0).sin()));
 
-    scene.bind(&text_y, Text::transform.then(Transform::y), &text);
+    scene.bind(
+        &text_y,
+        Text::transform.then(Transform::position).then(Position::y),
+        &text,
+    );
 
     scene.node(Render::new(&[&text])); // this node can later be used to do post processing effects
 

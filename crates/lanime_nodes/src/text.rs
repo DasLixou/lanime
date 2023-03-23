@@ -47,7 +47,7 @@ impl NodeRender for Text<'static> {
     fn render(&mut self, cx: &RenderContext) {
         let (brush, section) = self.internal.as_mut().unwrap();
 
-        section.screen_position.1 = self.transform.y * 20. + 50.;
+        section.screen_position.1 = self.transform.position.x * 20. + 50.;
 
         brush.queue(section as &Section);
         let text_buffer = brush.draw(cx.device, cx.view.unwrap(), cx.queue);
