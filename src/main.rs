@@ -1,10 +1,9 @@
 use lanime::prelude::{
-    layout::Transform,
-    nodes::{Render, Text},
+    layout::{Transform, Vector3Fields},
+    nodes::Text,
     res::ClosureResource,
     AnimationCurve, Lens, NodeRef, Scene, SceneDescriptor,
 };
-use lanime_core::layout::Vector3Fields;
 
 fn main() {
     let curve = AnimationCurve::ease_in_out();
@@ -38,8 +37,6 @@ fn example() -> (Scene, NodeRef<Text<'static>>) {
             .then(Vector3Fields::y),
         &text,
     );
-
-    scene.node(Render::new(&[&text])); // this node can later be used to do post processing effects
 
     (scene, text)
 }

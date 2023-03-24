@@ -1,5 +1,5 @@
 use lanime_bindfields::BindFields;
-use lanime_core::{layout::Transform, Node, Vector2, Vector3};
+use lanime_core::{layout::Transform, Node, Vector2};
 use lanime_renderer::{context::RenderContext, NodeRender};
 
 use wgpu_text::{
