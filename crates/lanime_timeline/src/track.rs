@@ -2,9 +2,11 @@ use std::cmp::Ordering;
 
 use crate::clip::Clip;
 
-pub enum FindStrategy {
-    Direct,
-    NextLowest,
+#[derive(Debug, PartialEq, Eq)]
+pub enum FindResult<T> {
+    Direct(T),
+    NextLowest(T),
+    Nothing,
 }
 
 pub struct Track<T> {
@@ -29,7 +31,7 @@ impl<T> Track<T> {
         }
     }
 
-    pub fn find_clip_mut(&mut self, time: usize, strategy: FindStrategy) -> Option<&mut T> {
+    pub fn find_clip_mut(&mut self, time: usize) -> FindResult<&mut T> {
         let search = self.clips.binary_search_by(|clip| {
             if clip.start_time > time {
                 Ordering::Greater
@@ -40,24 +42,21 @@ impl<T> Track<T> {
             }
         });
         match search {
-            Ok(pos) => Some(&mut self.clips[pos].val),
-            Err(pos) => match strategy {
-                FindStrategy::Direct => None,
-                FindStrategy::NextLowest => {
-                    if pos > 0 {
-                        Some(&mut self.clips[pos - 1].val)
-                    } else {
-                        None
-                    }
+            Ok(pos) => FindResult::Direct(&mut self.clips[pos].val),
+            Err(pos) => {
+                if pos > 0 {
+                    FindResult::NextLowest(&mut self.clips[pos - 1].val)
+                } else {
+                    FindResult::Nothing
                 }
-            },
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::track::FindStrategy;
+    use crate::track::FindResult;
 
     use super::Track;
 
@@ -70,51 +69,15 @@ mod test {
     }
 
     #[test]
-    fn find_clip_by_time_direct() {
-        let mut track = Track::new();
-        track.add_clip('a', 0, 12);
-        track.add_clip('b', 12, 3);
-        track.add_clip('c', 20, 2);
-        assert_eq!(
-            track.find_clip_mut(0, FindStrategy::Direct).cloned(),
-            Some('a')
-        );
-        assert_eq!(
-            track.find_clip_mut(12, FindStrategy::Direct).cloned(),
-            Some('b')
-        );
-        assert_eq!(
-            track.find_clip_mut(21, FindStrategy::Direct).cloned(),
-            Some('c')
-        );
-        assert_eq!(track.find_clip_mut(22, FindStrategy::Direct).cloned(), None);
-    }
-
-    #[test]
-    fn find_clip_by_time_next_lowest() {
+    fn find_clip_by_time() {
         let mut track = Track::new();
         track.add_clip('a', 5, 2);
         track.add_clip('b', 12, 3);
         track.add_clip('c', 20, 2);
-        assert_eq!(
-            track.find_clip_mut(0, FindStrategy::NextLowest).cloned(),
-            None
-        );
-        assert_eq!(
-            track.find_clip_mut(12, FindStrategy::NextLowest).cloned(),
-            Some('b')
-        );
-        assert_eq!(
-            track.find_clip_mut(17, FindStrategy::NextLowest).cloned(),
-            Some('b')
-        );
-        assert_eq!(
-            track.find_clip_mut(21, FindStrategy::NextLowest).cloned(),
-            Some('c')
-        );
-        assert_eq!(
-            track.find_clip_mut(22, FindStrategy::NextLowest).cloned(),
-            Some('c')
-        );
+        assert_eq!(track.find_clip_mut(0), FindResult::Nothing);
+        assert_eq!(track.find_clip_mut(12), FindResult::Direct(&mut 'b'));
+        assert_eq!(track.find_clip_mut(17), FindResult::NextLowest(&mut 'b'));
+        assert_eq!(track.find_clip_mut(21), FindResult::Direct(&mut 'c'));
+        assert_eq!(track.find_clip_mut(22), FindResult::NextLowest(&mut 'c'));
     }
 }
