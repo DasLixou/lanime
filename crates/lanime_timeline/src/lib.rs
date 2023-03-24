@@ -1,10 +1,12 @@
+use std::any::Any;
+
 use track::Track;
 
 pub mod clip;
 pub mod track;
 
 pub struct Timeline {
-    tracks: Vec<Track>,
+    tracks: Vec<Box<dyn Any>>,
 }
 
 impl Timeline {
@@ -13,7 +15,7 @@ impl Timeline {
     }
 
     #[inline]
-    pub fn add_track(&mut self, track: Track) {
-        self.tracks.push(track);
+    pub fn add_track<T: 'static>(&mut self, track: Track<T>) {
+        self.tracks.push(Box::new(track));
     }
 }
