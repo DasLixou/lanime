@@ -1,5 +1,5 @@
 use lanime_bindfields::BindFields;
-use lanime_core::{Node, Transform};
+use lanime_core::{layout::Transform, Node, Vector2, Vector3};
 use lanime_renderer::{context::RenderContext, NodeRender};
 
 use wgpu_text::{
@@ -37,9 +37,15 @@ impl NodeRender for Text<'static> {
                     .with_scale(25.)
                     .with_color([1., 1., 1., 1.]),
             )
-            .with_layout(Layout::default().h_align(wgpu_text::section::HorizontalAlign::Center))
-            .with_bounds((cx.config.width as f32, cx.config.height as f32))
-            .with_screen_position((cx.config.width as f32 * 0.5, 0.));
+            .with_layout(
+                Layout::default()
+                    .h_align(wgpu_text::section::HorizontalAlign::Center)
+                    .v_align(wgpu_text::section::VerticalAlign::Center),
+            )
+            .with_bounds((
+                self.transform.size.x.min(cx.config.width as f32),
+                self.transform.size.y.min(cx.config.height as f32),
+            ));
 
         self.internal = Some((brush, section));
     }
@@ -47,7 +53,16 @@ impl NodeRender for Text<'static> {
     fn render(&mut self, cx: &RenderContext) {
         let (brush, section) = self.internal.as_mut().unwrap();
 
-        section.screen_position.1 = self.transform.position.x * 20. + 50.;
+        let screen_pos = {
+            let screen = Vector2::new(cx.config.width as f32, cx.config.height as f32);
+
+            let top_left = (self.transform.position.truncate() + Vector2::new(1., 1.)) / 2.;
+
+            Vector2::new(top_left.x * screen.x, top_left.y * screen.y)
+        };
+
+        section.screen_position.0 = screen_pos.x;
+        section.screen_position.1 = screen_pos.y;
 
         brush.queue(section as &Section);
         let text_buffer = brush.draw(cx.device, cx.view.unwrap(), cx.queue);

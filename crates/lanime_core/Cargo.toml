@@ -9,3 +9,4 @@ edition = "2021"
 slotmap = "1.0.6"
 lanime_graph = { path = "../lanime_graph" }
 lanime_bindfields = { path = "../lanime_bindfields" }
+cgmath = "0.18.0"

@@ -1,9 +1,10 @@
 use lanime::prelude::{
+    layout::Transform,
     nodes::{Render, Text},
     res::ClosureResource,
-    AnimationCurve, Lens, NodeRef, Scene, SceneDescriptor, Transform,
+    AnimationCurve, Lens, NodeRef, Scene, SceneDescriptor,
 };
-use lanime_core::Position;
+use lanime_core::layout::Vector3Fields;
 
 fn main() {
     let curve = AnimationCurve::ease_in_out();
@@ -28,11 +29,13 @@ fn example() -> (Scene, NodeRef<Text<'static>>) {
         ..Text::DEFAULT
     });
 
-    let text_y = scene.node(ClosureResource(|cx| (cx.frame as f32 / 60.0).sin()));
+    let text_y = scene.node(ClosureResource(|cx| (cx.frame as f32 / 120.0).sin() / 2.));
 
     scene.bind(
         &text_y,
-        Text::transform.then(Transform::position).then(Position::y),
+        Text::transform
+            .then(Transform::position)
+            .then(Vector3Fields::y),
         &text,
     );
 
