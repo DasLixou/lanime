@@ -3,6 +3,7 @@ use std::any::Any;
 use track::Track;
 
 pub mod clip;
+pub mod clip_metadata;
 pub mod track;
 
 pub struct Timeline {

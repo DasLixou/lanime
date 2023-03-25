@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::clip::Clip;
+use crate::{clip::Clip, clip_metadata::ClipMetadata};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FindResult<T> {
@@ -10,7 +10,7 @@ pub enum FindResult<T> {
 }
 
 pub struct Track<T> {
-    clips: Vec<Clip<T>>,
+    clips: Vec<(ClipMetadata, Box<dyn Clip<T>>)>,
 }
 
 impl<T> Track<T> {
@@ -19,36 +19,54 @@ impl<T> Track<T> {
     }
 
     #[inline]
-    pub fn add_clip(&mut self, val: T, start_time: usize, length: usize) {
-        let clip = Clip {
-            start_time,
-            length,
-            val,
-        };
-        match self.clips.binary_search_by(|c| c.cmp(&clip)) {
+    pub fn add_clip(&mut self, clip: impl Clip<T> + 'static, start_time: usize, length: usize) {
+        let meta = ClipMetadata { start_time, length };
+        match self.clips.binary_search_by(|(c, _)| c.cmp(&meta)) {
             Ok(pos) => panic!("Overlapping clips at time {pos}"),
-            Err(pos) => self.clips.insert(pos, clip),
+            Err(pos) => self.clips.insert(pos, (meta, Box::new(clip))),
         }
     }
 
-    pub fn find_clip_mut(&mut self, time: usize) -> FindResult<&mut T> {
-        let search = self.clips.binary_search_by(|clip| {
-            if clip.start_time > time {
+    pub fn clip_index_at_time(&mut self, time: usize) -> FindResult<usize> {
+        let search = self.clips.binary_search_by(|(meta, _)| {
+            if meta.start_time > time {
                 Ordering::Greater
-            } else if clip.start_time + clip.length <= time {
+            } else if meta.start_time + meta.length <= time {
                 Ordering::Less
             } else {
                 Ordering::Equal
             }
         });
         match search {
-            Ok(pos) => FindResult::Direct(&mut self.clips[pos].val),
+            Ok(pos) => FindResult::Direct(pos),
             Err(pos) => {
                 if pos > 0 {
-                    FindResult::NextLowest(&mut self.clips[pos - 1].val)
+                    FindResult::NextLowest(pos - 1)
                 } else {
                     FindResult::Nothing
                 }
+            }
+        }
+    }
+
+    pub fn value_at_time(&mut self, time: usize, direct_only: bool) -> Option<T> {
+        if direct_only {
+            match self.clip_index_at_time(time) {
+                FindResult::Direct(pos) => {
+                    let clip = &mut self.clips[pos];
+                    let relative_time = time - clip.0.start_time;
+                    Some(clip.1.get_at(relative_time, clip.0))
+                }
+                FindResult::NextLowest(_) | FindResult::Nothing => None,
+            }
+        } else {
+            match self.clip_index_at_time(time) {
+                FindResult::Direct(pos) | FindResult::NextLowest(pos) => {
+                    let clip = &mut self.clips[pos];
+                    let relative_time = time - clip.0.start_time;
+                    Some(clip.1.get_at(relative_time, clip.0))
+                }
+                FindResult::Nothing => None,
             }
         }
     }
@@ -56,28 +74,48 @@ impl<T> Track<T> {
 
 #[cfg(test)]
 mod test {
-    use crate::track::FindResult;
+    use crate::{
+        clip::Clip,
+        clip_metadata::ClipMetadata,
+        track::{FindResult, Track},
+    };
 
-    use super::Track;
+    struct ValueClip<T>(T);
+    impl<T: Clone> Clip<T> for ValueClip<T> {
+        #[inline] #[rustfmt::skip]
+        fn get_at(&mut self, _time: usize, _meta: ClipMetadata) -> T { self.0.clone() }
+    }
 
     #[test]
     #[should_panic]
     fn overlapping_clip() {
         let mut track = Track::new();
-        track.add_clip('a', 0, 20);
-        track.add_clip('b', 10, 30);
+        track.add_clip(ValueClip('a'), 0, 20);
+        track.add_clip(ValueClip('b'), 10, 30);
     }
 
     #[test]
-    fn find_clip_by_time() {
+    fn find_clip_at_time() {
         let mut track = Track::new();
-        track.add_clip('a', 5, 2);
-        track.add_clip('b', 12, 3);
-        track.add_clip('c', 20, 2);
-        assert_eq!(track.find_clip_mut(0), FindResult::Nothing);
-        assert_eq!(track.find_clip_mut(12), FindResult::Direct(&mut 'b'));
-        assert_eq!(track.find_clip_mut(17), FindResult::NextLowest(&mut 'b'));
-        assert_eq!(track.find_clip_mut(21), FindResult::Direct(&mut 'c'));
-        assert_eq!(track.find_clip_mut(22), FindResult::NextLowest(&mut 'c'));
+        track.add_clip(ValueClip('a'), 5, 2); // 0
+        track.add_clip(ValueClip('b'), 12, 3); // 1
+        track.add_clip(ValueClip('c'), 20, 2); // 2
+        assert_eq!(track.clip_index_at_time(0), FindResult::Nothing);
+        assert_eq!(track.clip_index_at_time(12), FindResult::Direct(1));
+        assert_eq!(track.clip_index_at_time(17), FindResult::NextLowest(1));
+        assert_eq!(track.clip_index_at_time(21), FindResult::Direct(2));
+        assert_eq!(track.clip_index_at_time(22), FindResult::NextLowest(2));
+    }
+
+    #[test]
+    fn get_value_at_time() {
+        let mut track = Track::new();
+        track.add_clip(ValueClip('b'), 12, 3);
+        assert_eq!(track.value_at_time(0, false), None);
+        assert_eq!(track.value_at_time(12, false), Some('b'));
+        assert_eq!(track.value_at_time(17, false), Some('b'));
+        assert_eq!(track.value_at_time(0, true), None);
+        assert_eq!(track.value_at_time(12, true), Some('b'));
+        assert_eq!(track.value_at_time(17, true), None);
     }
 }

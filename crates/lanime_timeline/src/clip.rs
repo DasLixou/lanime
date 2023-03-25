@@ -1,20 +1,5 @@
-use std::cmp::Ordering;
+use crate::clip_metadata::ClipMetadata;
 
-#[derive(Debug)]
-pub(crate) struct Clip<T> {
-    pub(crate) start_time: usize,
-    pub(crate) length: usize,
-    pub(crate) val: T,
-}
-
-impl<T> Clip<T> {
-    pub(crate) fn cmp(&self, other: &Self) -> Ordering {
-        if self.start_time > other.start_time + other.length {
-            Ordering::Greater
-        } else if self.start_time + self.length <= other.start_time {
-            Ordering::Less
-        } else {
-            Ordering::Equal
-        }
-    }
+pub trait Clip<T> {
+    fn get_at(&mut self, relative_time: usize, meta: ClipMetadata) -> T;
 }
