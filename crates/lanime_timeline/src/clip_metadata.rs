@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ClipMetadata {
     pub start_time: usize,
     pub length: usize,

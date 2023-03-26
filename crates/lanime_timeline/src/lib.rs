@@ -4,7 +4,6 @@ use slotmap::new_key_type;
 use sorted_list::SortedList;
 use track::Track;
 
-pub mod clip;
 pub mod clip_metadata;
 pub mod sorted_list;
 pub mod track;
